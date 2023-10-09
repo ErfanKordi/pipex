@@ -6,7 +6,7 @@
 /*   By: ekordi <ekordi@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/24 18:11:18 by ekordi            #+#    #+#             */
-/*   Updated: 2023/09/20 14:17:51 by ekordi           ###   ########.fr       */
+/*   Updated: 2023/10/05 20:08:40 by ekordi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,6 @@ char	*ft_strjoin(char const *s1, char const *s2)
 
 	if (!s1 || !s2)
 		return (NULL);
-
 	join = malloc(sizeof(char) * (ft_strlen(s1) + ft_strlen(s2) + 1));
 	if (join == NULL)
 		return (NULL);

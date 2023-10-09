@@ -6,11 +6,12 @@
 /*   By: ekordi <ekordi@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/04 11:34:00 by ekordi            #+#    #+#             */
-/*   Updated: 2023/10/04 17:57:32 by ekordi           ###   ########.fr       */
+/*   Updated: 2023/10/05 20:08:02 by ekordi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
+
 void	free_arrayofstrings(char **a)
 {
 	int	i;
@@ -24,30 +25,33 @@ void	free_arrayofstrings(char **a)
 	free(a);
 }
 
-char	*cmd_path(char *cmd)
+char	*cmd_path(char *cmd, char **envp)
 {
 	char	*temp;
-	char	**path;
+	char	**paths;
 	int		i;
+	char	*path;
 
 	i = 0;
-	path = ft_split(PATH, ':');
-	while (path[i])
+	while (ft_strnstr(envp[i], "PATH", 4) == 0)
+		i++;
+	paths = ft_split(envp[i] + 5, ':');
+	while (paths[i])
 	{
-		temp = ft_strjoin(path[i], cmd);
+		path = ft_strjoin(paths[i], "/");
+		temp = ft_strjoin(path, cmd);
 		if (access(temp, X_OK) == 0)
 		{
-			free_arrayofstrings(path);
+			free_arrayofstrings(paths);
 			return (temp);
 		}
 		free(temp);
 		i++;
 	}
 	ft_putstr_fd("Command not found\n", 2);
-	free_arrayofstrings(path);
+	free_arrayofstrings(paths);
 	exit(127);
 }
-#include "pipex.h"
 
 int	child(char **argv, int *p_fd, char **envp)
 {
@@ -56,7 +60,7 @@ int	child(char **argv, int *p_fd, char **envp)
 	int		fd;
 
 	cmd = ft_split(argv[2], ' ');
-	cmdpath = cmd_path(cmd[0]);
+	cmdpath = cmd_path(cmd[0], envp);
 	close(p_fd[0]);
 	fd = open(argv[1], O_RDONLY, 0777);
 	if (fd == -1)
@@ -72,7 +76,7 @@ int	child(char **argv, int *p_fd, char **envp)
 	return (4);
 }
 
-int	parent(char **argv, int *p_fd, char **envp)
+void	parent(char **argv, int *p_fd, char **envp)
 {
 	char	**cmd;
 	char	*cmdpath;
@@ -86,7 +90,7 @@ int	parent(char **argv, int *p_fd, char **envp)
 		exit(1);
 	}
 	cmd = ft_split(argv[3], ' ');
-	cmdpath = cmd_path(cmd[0]);
+	cmdpath = cmd_path(cmd[0], envp);
 	fd = open(argv[4], O_WRONLY | O_CREAT | O_TRUNC, 0777);
 	if (pid == 0)
 	{
@@ -97,11 +101,10 @@ int	parent(char **argv, int *p_fd, char **envp)
 		close(p_fd[0]);
 		execve(cmdpath, cmd, envp);
 	}
-	close(p_fd[0]);
 	close(p_fd[1]);
 	waitpid(pid, NULL, 0);
-	return (5);
 }
+
 int	main(int argc, char **argv, char **envp)
 {
 	int	p_fd[2];
@@ -125,10 +128,7 @@ int	main(int argc, char **argv, char **envp)
 	}
 	if (pid1 == 0)
 		child(argv, p_fd, envp);
-	else
-	{
-		parent(argv, p_fd, envp);
-		waitpid(pid1, NULL, 0);
-	}
+	parent(argv, p_fd, envp);
+	waitpid(pid1, NULL, 0);
 	return (0);
 }
